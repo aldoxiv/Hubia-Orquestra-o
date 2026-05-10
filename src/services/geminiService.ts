@@ -5,7 +5,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export async function analyzeMarket(propertyData: any) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `Analise as tendências do mercado imobiliário para este imóvel: ${JSON.stringify(propertyData)}. 
       Forneça um relatório preditivo sugerindo ajustes de preço e cenários de risco.
       Retorne em formato JSON.`,
@@ -40,7 +40,7 @@ export async function analyzeMarket(propertyData: any) {
 export async function chatWithAgent(message: string, context: any) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       config: {
         systemInstruction: `Você é o "Colega Digital", um agente de IA especialista em intermediação imobiliária. 
         Sua função é colaborar e executar tarefas, não apenas responder perguntas. 
