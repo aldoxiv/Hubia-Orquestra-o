@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { OperationLog } from '@/src/types';
-import { Database, CreditCard, FileText, Globe, CheckCircle2, AlertCircle, Clock, ArrowRight, Sparkles, Settings, Wifi, ShieldCheck, Loader2 } from 'lucide-react';
+import { Database, CreditCard, FileText, Globe, CheckCircle2, AlertCircle, Clock, ArrowRight, Sparkles, Settings, Wifi, ShieldCheck, Loader2, RefreshCcw } from 'lucide-react';
 
 const logs: OperationLog[] = [
   { id: '1', type: 'Portal', action: 'Captura de Leads Automática', status: 'Completo', timestamp: 'Agora' },
@@ -11,41 +11,98 @@ const logs: OperationLog[] = [
   { id: '5', type: 'CRM', action: 'Disparo de Email Marketing Customizado', status: 'Erro', timestamp: '1 hora atrás' },
 ];
 
-const SystemNode = ({ label, status, active, icon: Icon }: any) => (
-  <div className={`p-6 border-2 transition-all flex flex-col items-center gap-3 ${
-    active 
-      ? 'border-slate-900 bg-slate-900 text-white scale-105 shadow-[8px_8px_0px_0px_rgba(226,232,240,1)]' 
-      : 'border-slate-200 bg-white text-slate-400'
-  }`}>
-    <div className={`w-10 h-10 flex items-center justify-center border ${active ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-100 bg-slate-50'}`}>
-      <Icon size={20} />
+const SystemNode = ({ label, status, active, icon: Icon, description }: any) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`p-6 border-2 transition-all flex flex-col items-center gap-3 relative cursor-help ${
+        active 
+          ? 'border-slate-900 bg-slate-900 text-white shadow-[8px_8px_0px_0px_rgba(226,232,240,1)]' 
+          : 'border-slate-200 bg-white text-slate-400'
+      }`}
+    >
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full w-48 p-3 bg-slate-900 border-2 border-emerald-400 text-white z-50 pointer-events-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+          >
+            <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-1 border-b border-emerald-400/20 pb-1">Status Detalhado</p>
+            <p className="text-[8px] leading-relaxed font-bold uppercase tracking-tight">{description}</p>
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 border-r-2 border-b-2 border-emerald-400 rotate-45" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className={`w-10 h-10 flex items-center justify-center border ${active ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-100 bg-slate-50'}`}>
+        <Icon size={20} />
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+      <div className={`text-[8px] font-bold px-2 py-0.5 uppercase tracking-tighter border ${
+        status === 'online' || status === 'Sincronizado' || status === 'Capturando' || status === 'Processando'
+          ? 'text-emerald-400 border-emerald-400/20' 
+          : status === 'Retentiva'
+            ? 'text-amber-400 border-amber-400/20 animate-pulse'
+            : 'text-slate-500 border-slate-200'
+      }`}>
+        {status}
+      </div>
     </div>
-    <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-    <div className={`text-[8px] font-bold px-2 py-0.5 uppercase tracking-tighter border ${
-      status === 'online' || status === 'Sincronizado' || status === 'Capturando' || status === 'Processando'
-        ? 'text-emerald-400 border-emerald-400/20' 
-        : 'text-slate-500 border-slate-200'
-    }`}>
-      {status}
-    </div>
-  </div>
-);
+  );
+};
 
 export default function OperationHub() {
   const [crmUrl, setCrmUrl] = useState('https://api.crm-legado.io/v2');
   const [crmKey, setCrmKey] = useState('••••••••••••••••');
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<null | 'success' | 'error'>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (retryCountdown !== null && retryCountdown > 0) {
+      interval = setInterval(() => {
+        setRetryCountdown(prev => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (retryCountdown === 0) {
+      handleTestConnection();
+    }
+    return () => clearInterval(interval);
+  }, [retryCountdown]);
 
   const handleTestConnection = () => {
     setIsTesting(true);
     setTestResult(null);
+    setIsRetrying(false);
+    setRetryCountdown(null);
+    if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
     
     // Simulate API connection test
     setTimeout(() => {
       setIsTesting(false);
-      setTestResult(Math.random() > 0.3 ? 'success' : 'error');
+      const success = Math.random() > 0.6; // Increased failure rate to test retries
+      setTestResult(success ? 'success' : 'error');
+
+      if (!success) {
+        setIsRetrying(true);
+        // Random delay between 60s and 300s (1-5 minutes)
+        const delay = Math.floor(Math.random() * (300 - 60 + 1) + 60);
+        setRetryCountdown(delay);
+      }
     }, 2000);
+  };
+
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -58,10 +115,33 @@ export default function OperationHub() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <SystemNode icon={Database} label="CRM Legado" status={testResult === 'success' ? 'Sincronizado' : 'Offline'} active={testResult === 'success'} />
-        <SystemNode icon={CreditCard} label="Hub Financeiro" status="Processando" active={true} />
-        <SystemNode icon={FileText} label="Contratos Digitais" status="Standby" />
-        <SystemNode icon={Globe} label="Portais Externos" status="Capturando" active={true} />
+        <SystemNode 
+          icon={Database} 
+          label="CRM Legado" 
+          status={testResult === 'success' ? 'Sincronizado' : isRetrying ? 'Retentiva' : 'Offline'} 
+          active={testResult === 'success'} 
+          description="Sincronização bidirecional de leads e atividades via API REST v2.4. Última verificação de integridade há 2 min."
+        />
+        <SystemNode 
+          icon={CreditCard} 
+          label="Hub Financeiro" 
+          status="Processando" 
+          active={true} 
+          description="Processamento de faturas, boletos e conciliação bancária via gateway seguro. 14 transações em fila."
+        />
+        <SystemNode 
+          icon={FileText} 
+          label="Contratos Digitais" 
+          status="Standby" 
+          description="Monitoramento de assinaturas digitais. Aguardando interação do proponente em 2 contratos pendentes."
+        />
+        <SystemNode 
+          icon={Globe} 
+          label="Portais Externos" 
+          status="Capturando" 
+          active={true} 
+          description="Scraping e integração via webhook com Zap Imóveis, VivaReal e OLX. Fluxo de entrada estável e monitorado."
+        />
       </div>
 
       {/* CRM Configuration UI */}
@@ -98,12 +178,19 @@ export default function OperationHub() {
                 <button 
                   onClick={handleTestConnection}
                   disabled={isTesting}
-                  className="w-full bg-slate-900 text-white font-black text-[10px] uppercase tracking-[0.2em] py-4 hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                  className={`w-full text-white font-black text-[10px] uppercase tracking-[0.2em] py-4 transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
+                    isRetrying ? 'bg-amber-600 hover:bg-amber-700' : 'bg-slate-900 hover:bg-slate-800'
+                  }`}
                 >
                   {isTesting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
                       TESTANDO_SYNC...
+                    </>
+                  ) : isRetrying ? (
+                    <>
+                      <RefreshCcw size={16} className="animate-spin-slow" />
+                      RETENTIVA EM {retryCountdown ? formatCountdown(retryCountdown) : '...'}
                     </>
                   ) : (
                     <>
@@ -117,6 +204,7 @@ export default function OperationHub() {
               <AnimatePresence>
                 {testResult && (
                   <motion.div 
+                    key="test-result"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
@@ -131,6 +219,16 @@ export default function OperationHub() {
                       {testResult === 'success' ? 'Sincronização Validada' : 'Erro de Autenticação'}
                     </span>
                   </motion.div>
+                )}
+                {isRetrying && !isTesting && (
+                  <motion.p 
+                    key="retry-countdown"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-[8px] font-black uppercase text-amber-600 tracking-tighter text-center"
+                  >
+                    Agendada nova tentativa automática para evitar deadlock de sistema
+                  </motion.p>
                 )}
               </AnimatePresence>
             </div>

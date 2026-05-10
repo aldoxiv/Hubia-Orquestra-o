@@ -24,6 +24,14 @@ const data = [
   { name: 'Mai', leads: 189, conv: 48 },
 ];
 
+const priceTrendData = [
+  { month: 'Jan', price: 4100 },
+  { month: 'Fev', price: 4150 },
+  { month: 'Mar', price: 4300 },
+  { month: 'Abr', price: 4450 },
+  { month: 'Mai', price: 4500 },
+];
+
 const StatCard = ({ title, value, change, icon: Icon, bg }: any) => (
   <motion.div 
     initial={{ opacity: 0 }}
@@ -96,6 +104,34 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div className="flex justify-between items-end border-b border-slate-200 pb-2">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Tendência de Preços Jardins (Média)</h3>
+          <p className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">REAL_TIME_ANALYSIS_V2.4</p>
+        </div>
+        <div className="h-[300px] border-2 border-slate-900 p-8 bg-white shadow-[8px_8px_0px_0px_rgba(15,23,42,1)]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={priceTrendData}>
+              <CartesianGrid strokeDasharray="1 4" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="month" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `R$ ${val}k`} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#0f172a', border: 'none', color: '#fff', fontSize: '10px' }}
+                formatter={(value: any) => [`R$ ${value.toLocaleString()}k`, 'Preço Médio']}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="price" 
+                stroke="#0f172a" 
+                strokeWidth={4} 
+                dot={{ fill: '#0f172a', strokeWidth: 2, r: 4, stroke: '#fff' }} 
+                activeDot={{ r: 6, strokeWidth: 0 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

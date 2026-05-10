@@ -56,7 +56,7 @@ export default function AgentChatComponent() {
     if (!messageText.trim() || loading) return;
 
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       text: messageText,
       timestamp: new Date().toLocaleTimeString()
@@ -69,7 +69,7 @@ export default function AgentChatComponent() {
     const responseText = await chatWithAgent(messageText, SYSTEM_CONTEXT);
 
     const agentMsg: Message = {
-      id: (Date.now() + 1).toString(),
+      id: `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'agent',
       text: responseText,
       timestamp: new Date().toLocaleTimeString()

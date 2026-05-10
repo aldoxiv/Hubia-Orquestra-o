@@ -43,7 +43,17 @@ const initialLeads: Lead[] = [
 ];
 
 export default function LeadManagement() {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [minScore, setMinScore] = useState(0);
+  const [dateFilter, setDateFilter] = useState('');
+
+  const filteredLeads = initialLeads.filter(lead => {
+    const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         lead.propertyInterest.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesScore = lead.qualificationScore >= minScore;
+    const matchesDate = dateFilter === '' || lead.createdAt.startsWith(dateFilter);
+    return matchesSearch && matchesScore && matchesDate;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -68,13 +78,36 @@ export default function LeadManagement() {
         </button>
       </div>
 
-      <div className="flex gap-4 p-2 bg-slate-100 border border-slate-200">
-        <div className="flex-1 relative">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-100 border border-slate-200">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input 
             type="text" 
-            placeholder="Filtrar por metadados de lead..." 
+            placeholder="NOME / ATIVO..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white border border-slate-200 pl-10 pr-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-900 focus:outline-none focus:border-slate-900 transition-colors"
+          />
+        </div>
+        <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2">
+          <Filter className="text-slate-400" size={16} />
+          <span className="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap">MIN SCORE: {minScore}%</span>
+          <input 
+            type="range" 
+            min="0" 
+            max="100" 
+            value={minScore}
+            onChange={(e) => setMinScore(parseInt(e.target.value))}
+            className="flex-1 accent-slate-900 cursor-pointer"
+          />
+        </div>
+        <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2">
+          <Clock className="text-slate-400" size={16} />
+          <input 
+            type="date" 
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="flex-1 bg-transparent text-[10px] font-bold uppercase text-slate-900 focus:outline-none"
           />
         </div>
       </div>
@@ -91,12 +124,13 @@ export default function LeadManagement() {
             </tr>
           </thead>
           <tbody className="divide-y border-slate-200">
-            <AnimatePresence>
-              {leads.map((lead) => (
+            <AnimatePresence mode="popLayout">
+              {filteredLeads.length > 0 ? filteredLeads.map((lead) => (
                 <motion.tr 
                   key={lead.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="hover:bg-slate-50 transition-colors group"
                 >
                   <td className="px-6 py-4">
@@ -139,7 +173,18 @@ export default function LeadManagement() {
                     </button>
                   </td>
                 </motion.tr>
-              ))}
+              )) : (
+                <motion.tr 
+                  key="empty-results"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <td colSpan={5} className="px-6 py-12 text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    Nenhum lead orquestrado com esses filtros
+                  </td>
+                </motion.tr>
+              )}
             </AnimatePresence>
           </tbody>
         </table>
