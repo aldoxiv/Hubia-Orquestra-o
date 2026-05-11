@@ -58,10 +58,10 @@ export default function App() {
         </div>
 
         {/* Header Section */}
-        <header className="px-6 lg:px-12 pt-6 lg:pt-10 pb-6 border-b-2 border-slate-900 mx-4 lg:mx-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 shrink-0">
+        <header className="px-4 lg:px-12 pt-4 lg:pt-10 pb-4 border-b-2 border-slate-900 mx-2 lg:mx-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-6 shrink-0">
           <div>
-            <h1 className="text-2xl lg:text-4xl font-black tracking-tighter uppercase leading-none">Colega Digital</h1>
-            <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px] mt-2">Orquestração Agêntica / v2.4</p>
+            <h1 className="text-xl lg:text-4xl font-black tracking-tighter uppercase leading-none">Colega Digital</h1>
+            <p className="text-slate-500 font-medium tracking-wide uppercase text-[9px] lg:text-[10px] mt-1 lg:mt-2">Orquestração Agêntica / v2.4</p>
           </div>
           <div className="flex gap-4 lg:gap-8 text-left">
             <div>
@@ -75,7 +75,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="flex-1 w-full max-w-7xl mx-auto p-4 lg:p-8 overflow-y-auto">
+        <div className="flex-1 w-full max-w-7xl mx-auto flex flex-col min-h-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
@@ -83,15 +83,19 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className={`flex-1 flex flex-col min-h-0 ${activeSection === 'agent' ? 'overflow-hidden' : 'overflow-y-auto p-4 lg:p-8'}`}
             >
-              {renderSection()}
+              {activeSection === 'agent' ? (
+                <div className="flex-1 flex flex-col p-2 lg:p-6 min-h-0 w-full">
+                  {renderSection()}
+                </div>
+              ) : renderSection()}
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Footer Bar */}
-        <footer className="px-6 lg:px-12 py-6 border-t border-slate-200 shrink-0 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] lg:text-[10px] font-bold uppercase tracking-[0.15em] opacity-40 text-center md:text-left">
+        <footer className="px-6 lg:px-12 py-3 lg:py-6 border-t border-slate-200 shrink-0 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4 text-[8px] lg:text-[10px] font-bold uppercase tracking-[0.15em] opacity-40 text-center md:text-left">
           <div>PropOps Infrastructure Hub © 2024</div>
           <div className="flex flex-wrap justify-center gap-4 lg:gap-8">
             <span>Segurança: AES-256</span>
